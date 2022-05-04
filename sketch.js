@@ -1,10 +1,5 @@
 let bodyPixNet;
 
-function preload() {
-  gameBackground = loadImage("assets/game-background.png");
-  bodyPix.load().then((net) => (bodyPixNet = net));
-}
-
 function setup() {
   width = 640;
   height = 480;
@@ -14,6 +9,8 @@ function setup() {
   cameraCapture = createCapture(VIDEO);
   cameraCapture.hide();
 
+  gameBackground = loadImage("assets/game-background.png");
+
   cuteCircle = createSprite(400, 200);
   cuteCircle.addAnimation(
     "floating",
@@ -22,21 +19,34 @@ function setup() {
   );
   cuteCircle.velocity.x = -5;
 
+  bodyPix.load().then((net) => (bodyPixNet = net));
+
   text("Loading...", width / 2, height / 2);
 }
 
 function draw() {
   if (bodyPixNet && cameraCapture.elt.readyState === 4) {
-    bodyPixNet.segmentPerson(cameraCapture.elt).then(({ data: seg }) => {
-      background(gameBackground);
+    bodyPixNet
+      .segmentPerson(cameraCapture.elt)
+      .then(({ data: seg, allPoses: [{ keypoints } = {}] }) => {
+        background(gameBackground);
 
-      addPlayerToCanvas(seg);
+        addPlayerToCanvas(seg);
 
-      if (cuteCircle.position.x < 0) {
-        cuteCircle.position.x = width;
-      }
-      drawSprites();
-    });
+        if (
+          keypoints?.some(({ position: { x: landmarkX, y: landmarkY } }) =>
+            cuteCircle.overlapPoint(landmarkX, landmarkY)
+          )
+        ) {
+          noLoop();
+        }
+
+        if (cuteCircle.position.x < 0) {
+          cuteCircle.position.x = width;
+        }
+        cuteCircle.debug = mouseIsPressed;
+        drawSprites();
+      });
   }
 }
 
@@ -59,7 +69,7 @@ function addPlayerToCanvas(seg) {
       if (seg[row * frameGraphics.width + col] === 0) {
         for (let i = 0; i < framePixelDensity; ++i) {
           for (let j = 0; j < framePixelDensity; ++j) {
-            index =
+            const index =
               4 *
               ((row * framePixelDensity + j) *
                 frameGraphics.width *
