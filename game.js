@@ -23,14 +23,6 @@ export function setup(p5) {
 
     programVars.gameBackground = p5.loadImage("assets/game-background.png")
 
-    programVars.cuteCircle = p5.createSprite(400, 200)
-    programVars.cuteCircle.addAnimation(
-      "floating",
-      "assets/obstacles/asterisk-circle-0.png",
-      "assets/obstacles/asterisk-circle-8.png",
-    )
-    programVars.cuteCircle.velocity.x = -5
-
     tf.ready()
       .then(bodyPix.load)
       .then((net) => (programVars.bodyPixNet = net))
@@ -49,18 +41,6 @@ export function draw(p5) {
           p5.background(programVars.gameBackground)
 
           addPlayerSegToCanvas(seg, p5)
-
-          if (
-            keypoints?.some(({ position: { x: landmarkX, y: landmarkY } }) =>
-              programVars.cuteCircle.overlapPoint(landmarkX, landmarkY),
-            )
-          ) {
-            p5.noLoop()
-          }
-
-          if (programVars.cuteCircle.position.x < 0) {
-            programVars.cuteCircle.position.x = p5.width
-          }
 
           p5.drawSprites()
         })
