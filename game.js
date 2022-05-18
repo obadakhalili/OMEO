@@ -73,10 +73,20 @@ export function setup(p5) {
     programVars.UIs.nextLevelButton.addClass("button")
     programVars.UIs.nextLevelButton.hide()
     programVars.UIs.nextLevelButton.mousePressed(function () {
-      if (programVars.playedLevelsCount === programVars.totalLevelsCount) {
-        this.html("Next Level")
-      }
+      programVars.sprites.firstBird.velocity.x -= 5
+      programVars.sprites.secondBird.velocity.x -= 5
+      this.hide()
+      p5.loop()
+    })
 
+    programVars.UIs.restartGameButton = p5.createButton("Restart Game")
+    programVars.UIs.restartGameButton.position("50%", "50%")
+    programVars.UIs.restartGameButton.addClass("button")
+    programVars.UIs.restartGameButton.hide()
+    programVars.UIs.restartGameButton.mousePressed(function () {
+      programVars.sprites.firstBird.velocity.x = programVars.birdInitialVelocity
+      programVars.sprites.secondBird.velocity.x =
+        programVars.birdInitialVelocity
       this.hide()
       p5.loop()
     })
@@ -131,25 +141,18 @@ export function draw(p5) {
                     programVars.playedLevelsCount ===
                     programVars.totalLevelsCount
                   ) {
-                    programVars.sprites.firstBird.velocity.x =
-                      programVars.birdInitialVelocity
-                    programVars.sprites.secondBird.velocity.x =
-                      programVars.birdInitialVelocity
-
-                    programVars.UIs.nextLevelButton.html("You Won!\nRestart")
+                    // TODO: game won screen
+                    programVars.UIs.restartGameButton.show()
                   } else {
-                    programVars.sprites.firstBird.velocity.x -= 10
-                    programVars.sprites.secondBird.velocity.x -= 10
+                    programVars.UIs.nextLevelButton.show()
                   }
-
-                  programVars.UIs.nextLevelButton.show()
                 }
               }
 
               p5.drawSprites()
             })
           } else {
-            console.log("stand against the camera")
+            // TODO: stand by camera screen
           }
         })
     }
