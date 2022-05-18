@@ -1,7 +1,9 @@
 import P5 from "p5"
 import p5Play from "@obadakhalili/p5.play"
-import * as tf from "@tensorflow/tfjs"
-import * as bodyPix from "@tensorflow-models/body-pix"
+import * as poseDetection from "@tensorflow-models/pose-detection"
+import "@tensorflow/tfjs-core"
+import "@tensorflow/tfjs-backend-webgl"
+import "@mediapipe/pose"
 
 import "./style.css"
 
@@ -71,85 +73,103 @@ export function setup(p5) {
     programVars.UIs.nextLevelButton.addClass("button")
     programVars.UIs.nextLevelButton.hide()
     programVars.UIs.nextLevelButton.mousePressed(function () {
-      if (programVars.playedLevelsCount === programVars.totalLevelsCount) {
-        this.html("Next Level")
-      }
-
+      programVars.sprites.firstBird.velocity.x -= 5
+      programVars.sprites.secondBird.velocity.x -= 5
       this.hide()
       p5.loop()
     })
 
-    tf.ready()
-      .then(bodyPix.load)
-      .then((net) => (programVars.bodyPixNet = net))
+    programVars.UIs.restartGameButton = p5.createButton("Restart Game")
+    programVars.UIs.restartGameButton.position("50%", "50%")
+    programVars.UIs.restartGameButton.addClass("button")
+    programVars.UIs.restartGameButton.hide()
+    programVars.UIs.restartGameButton.mousePressed(function () {
+      programVars.sprites.firstBird.velocity.x = programVars.birdInitialVelocity
+      programVars.sprites.secondBird.velocity.x =
+        programVars.birdInitialVelocity
+      this.hide()
+      p5.loop()
+    })
+
+    poseDetection
+      .createDetector(poseDetection.SupportedModels.BlazePose, {
+        runtime: "mediapipe",
+        solutionPath: "https://cdn.jsdelivr.net/npm/@mediapipe/pose",
+        enableSegmentation: true,
+      })
+      .then((detector) => (programVars.blazePoze = detector))
   }
 }
 
 export function draw(p5) {
   return () => {
     if (
-      programVars.bodyPixNet &&
+      programVars.blazePoze &&
       programVars.cameraCapture.elt.readyState === 4
     ) {
-      programVars.bodyPixNet
-        .segmentPerson(programVars.cameraCapture.elt)
-        .then(({ data: seg, allPoses: [{ keypoints } = {}] }) => {
-          p5.background(programVars.gameBackground)
+      programVars.blazePoze
+        .estimatePoses(programVars.cameraCapture.elt, { flipHorizontal: true })
+        .then(([{ keypoints, segmentation } = {}]) => {
+          if (keypoints) {
+            segmentation.mask.toImageData().then(({ data: segImageData }) => {
+              p5.background(programVars.gameBackground)
 
-          addPlayerSegToCanvas(seg, p5)
+              addPlayerSegToCanvas(segImageData, p5)
 
-          if (programVars.sprites.secondBird.position.x < 0) {
-            programVars.completeSpritesPassesCount++
+              if (programVars.sprites.secondBird.position.x < 0) {
+                programVars.completeSpritesPassesCount++
 
-            programVars.sprites.firstBird.position.x =
-              programVars.firstBirdInitialPosition.x
-            programVars.sprites.firstBird.position.y =
-              programVars.firstBirdInitialPosition.y
-            programVars.sprites.secondBird.position.x =
-              programVars.secondBirdInitialPosition.x
-            programVars.sprites.secondBird.position.y =
-              programVars.secondBirdInitialPosition.y
+                programVars.sprites.firstBird.position.x =
+                  programVars.firstBirdInitialPosition.x
+                programVars.sprites.firstBird.position.y =
+                  programVars.firstBirdInitialPosition.y
+                programVars.sprites.secondBird.position.x =
+                  programVars.secondBirdInitialPosition.x
+                programVars.sprites.secondBird.position.y =
+                  programVars.secondBirdInitialPosition.y
 
-            if (
-              programVars.completeSpritesPassesCount %
-                programVars.passesCountPerLevel ===
-              0
-            ) {
-              programVars.playedLevelsCount++
+                if (
+                  programVars.completeSpritesPassesCount %
+                    programVars.passesCountPerLevel ===
+                  0
+                ) {
+                  programVars.playedLevelsCount++
 
-              p5.noLoop()
+                  p5.noLoop()
 
-              if (
-                programVars.playedLevelsCount === programVars.totalLevelsCount
-              ) {
-                programVars.sprites.firstBird.velocity.x =
-                  programVars.birdInitialVelocity
-                programVars.sprites.secondBird.velocity.x =
-                  programVars.birdInitialVelocity
-
-                programVars.UIs.nextLevelButton.html("You Won!\nRestart")
-              } else {
-                programVars.sprites.firstBird.velocity.x -= 10
-                programVars.sprites.secondBird.velocity.x -= 10
+                  if (
+                    programVars.playedLevelsCount ===
+                    programVars.totalLevelsCount
+                  ) {
+                    // TODO: game won screen
+                    programVars.UIs.restartGameButton.show()
+                  } else {
+                    programVars.UIs.nextLevelButton.show()
+                  }
+                }
               }
 
-              programVars.UIs.nextLevelButton.show()
-            }
+              p5.drawSprites()
+            })
+          } else {
+            // TODO: stand by camera screen
           }
-
-          p5.drawSprites()
         })
     }
   }
 }
 
-function addPlayerSegToCanvas(seg, p5) {
+function addPlayerSegToCanvas(segImageData, p5) {
   const frameGraphics = p5.createGraphics(
     programVars.cameraCapture.elt.width,
     programVars.cameraCapture.elt.height,
   )
 
+  frameGraphics.translate(frameGraphics.width, 0)
+  frameGraphics.scale(-1, 1)
   frameGraphics.drawingContext.drawImage(programVars.cameraCapture.elt, 0, 0)
+  frameGraphics.translate(-frameGraphics.width, 0)
+  frameGraphics.scale(1, 1)
 
   frameGraphics.loadPixels()
 
@@ -159,7 +179,7 @@ function addPlayerSegToCanvas(seg, p5) {
     ++row
   ) {
     for (let col = 0; col < frameGraphics.width; ++col) {
-      if (seg[row * frameGraphics.width + col] === 0) {
+      if (segImageData[(row * frameGraphics.width + col) * 4 + 3] / 255 < 0.5) {
         for (let i = 0; i < framePixelDensity; ++i) {
           for (let j = 0; j < framePixelDensity; ++j) {
             const index =

@@ -14,18 +14,18 @@
     "*.{js,ts,jsx,tsx,mdx,css,html,md,yml,json}": "yarn format"
   },
   "devDependencies": {
+    "@tensorflow/tfjs-converter": "^3.17.0",
+    "husky": "^7.0.4",
+    "lint-staged": "^12.4.1",
     "prettier": "^2.6.2",
     "vite": "^2.9.7"
   },
   "dependencies": {
+    "@mediapipe/pose": "^0.5.1635988162",
     "@obadakhalili/p5.play": "^1.0.0",
-    "@tensorflow-models/body-pix": "^2.2.0",
-    "@tensorflow/tfjs": "^3.15.0",
-    "@tensorflow/tfjs-backend-webgl": "^3.15.0",
-    "@tensorflow/tfjs-converter": "^3.15.0",
-    "@tensorflow/tfjs-core": "^3.15.0",
-    "husky": "^7.0.4",
-    "lint-staged": "^12.4.1",
+    "@tensorflow-models/pose-detection": "^2.0.0",
+    "@tensorflow/tfjs-backend-webgl": "^3.17.0",
+    "@tensorflow/tfjs-core": "^3.17.0",
     "p5": "^1.4.1"
   }
 }
