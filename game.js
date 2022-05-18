@@ -84,9 +84,8 @@ export function setup(p5) {
     programVars.UIs.restartGameButton.addClass("button")
     programVars.UIs.restartGameButton.hide()
     programVars.UIs.restartGameButton.mousePressed(function () {
-      programVars.sprites.firstBird.velocity.x = programVars.birdInitialVelocity
-      programVars.sprites.secondBird.velocity.x =
-        programVars.birdInitialVelocity
+      resetSpritesPosition()
+      resetSpritesVelocity()
       this.hide()
       p5.loop()
     })
@@ -103,6 +102,7 @@ export function setup(p5) {
 
 export function draw(p5) {
   return () => {
+    // TODO: fix sprites are moving before game is ready
     if (
       programVars.blazePoze &&
       programVars.cameraCapture.elt.readyState === 4
@@ -116,17 +116,28 @@ export function draw(p5) {
 
               addPlayerSegToCanvas(segImageData, p5)
 
+              p5.drawSprites()
+
+              if (
+                keypoints.some(
+                  ({ x, y }) =>
+                    programVars.sprites.firstBird.overlapPoint(x, y) ||
+                    programVars.sprites.secondBird.overlapPoint(x, y),
+                )
+              ) {
+                p5.background(0, 0, 0, 0.5 * 255)
+                p5.textSize(40)
+                p5.textAlign(p5.CENTER)
+                p5.text("Game Over", p5.width / 2, p5.height * 0.25)
+                p5.fill(255)
+                p5.noLoop()
+                programVars.UIs.restartGameButton.show()
+              }
+
               if (programVars.sprites.secondBird.position.x < 0) {
                 programVars.completeSpritesPassesCount++
 
-                programVars.sprites.firstBird.position.x =
-                  programVars.firstBirdInitialPosition.x
-                programVars.sprites.firstBird.position.y =
-                  programVars.firstBirdInitialPosition.y
-                programVars.sprites.secondBird.position.x =
-                  programVars.secondBirdInitialPosition.x
-                programVars.sprites.secondBird.position.y =
-                  programVars.secondBirdInitialPosition.y
+                resetSpritesPosition()
 
                 if (
                   programVars.completeSpritesPassesCount %
@@ -148,8 +159,6 @@ export function draw(p5) {
                   }
                 }
               }
-
-              p5.drawSprites()
             })
           } else {
             // TODO: stand by camera screen
@@ -200,4 +209,20 @@ function addPlayerSegToCanvas(segImageData, p5) {
   p5.image(frameGraphics, 0, 0)
 
   frameGraphics.remove()
+}
+
+function resetSpritesPosition() {
+  programVars.sprites.firstBird.position.x =
+    programVars.firstBirdInitialPosition.x
+  programVars.sprites.firstBird.position.y =
+    programVars.firstBirdInitialPosition.y
+  programVars.sprites.secondBird.position.x =
+    programVars.secondBirdInitialPosition.x
+  programVars.sprites.secondBird.position.y =
+    programVars.secondBirdInitialPosition.y
+}
+
+function resetSpritesVelocity() {
+  programVars.sprites.firstBird.velocity.x = programVars.birdInitialVelocity
+  programVars.sprites.secondBird.velocity.x = programVars.birdInitialVelocity
 }
