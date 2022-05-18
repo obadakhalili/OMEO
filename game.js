@@ -17,12 +17,16 @@ new P5((p5) => {
 const programVars = {
   sprites: {},
   UIs: {},
+  totalLivesCount: 3,
   completeSpritesPassesCount: 0,
   passesCountPerLevel: 2,
   totalLevelsCount: 3,
   playedLevelsCount: 0,
   birdInitialVelocity: -5,
+  isPlayerSolid: true,
 }
+
+programVars.remainingLivesCount = programVars.totalLivesCount
 
 export function setup(p5) {
   return () => {
@@ -86,6 +90,7 @@ export function setup(p5) {
     programVars.UIs.restartGameButton.mousePressed(function () {
       resetSpritesPosition()
       resetSpritesVelocity()
+      programVars.remainingLivesCount = programVars.totalLivesCount
       this.hide()
       p5.loop()
     })
@@ -118,20 +123,32 @@ export function draw(p5) {
 
               p5.drawSprites()
 
+              if (programVars.remainingLivesCount > 0) {
+                p5.textSize(25)
+                p5.textAlign(p5.LEFT)
+                p5.text("LEVELS = " + programVars.remainingLivesCount, 15, 25)
+                p5.fill(255)
+              } else {
+                p5.noLoop()
+                p5.background(0, 0, 0, 0.5 * 255)
+                p5.textSize(40)
+                p5.textAlign(p5.CENTER)
+                p5.text("Game Over", p5.width / 2, p5.height * 0.25)
+                p5.fill(255)
+                programVars.UIs.restartGameButton.show()
+              }
+
               if (
+                programVars.isPlayerSolid &&
                 keypoints.some(
                   ({ x, y }) =>
                     programVars.sprites.firstBird.overlapPoint(x, y) ||
                     programVars.sprites.secondBird.overlapPoint(x, y),
                 )
               ) {
-                p5.background(0, 0, 0, 0.5 * 255)
-                p5.textSize(40)
-                p5.textAlign(p5.CENTER)
-                p5.text("Game Over", p5.width / 2, p5.height * 0.25)
-                p5.fill(255)
-                p5.noLoop()
-                programVars.UIs.restartGameButton.show()
+                programVars.remainingLivesCount--
+                programVars.isPlayerSolid = false
+                setTimeout(() => (programVars.isPlayerSolid = true), 1500)
               }
 
               if (programVars.sprites.secondBird.position.x < 0) {
@@ -182,6 +199,7 @@ function addPlayerSegToCanvas(segImageData, p5) {
 
   frameGraphics.loadPixels()
 
+  // TODO: consider detecting collision here
   for (
     let framePixelDensity = frameGraphics.pixelDensity(), row = 0;
     row < frameGraphics.height;
@@ -189,17 +207,21 @@ function addPlayerSegToCanvas(segImageData, p5) {
   ) {
     for (let col = 0; col < frameGraphics.width; ++col) {
       if (segImageData[(row * frameGraphics.width + col) * 4 + 3] / 255 < 0.5) {
-        for (let i = 0; i < framePixelDensity; ++i) {
-          for (let j = 0; j < framePixelDensity; ++j) {
-            const index =
-              4 *
-              ((row * framePixelDensity + j) *
-                frameGraphics.width *
-                framePixelDensity +
-                (col * framePixelDensity + i))
-            frameGraphics.pixels[index + 3] = 0
-          }
-        }
+        updateP5Pixel(
+          row,
+          col,
+          frameGraphics.width,
+          framePixelDensity,
+          (baseIndex) => (frameGraphics.pixels[baseIndex + 3] = 0),
+        )
+      } else if (!programVars.isPlayerSolid) {
+        updateP5Pixel(
+          row,
+          col,
+          frameGraphics.width,
+          framePixelDensity,
+          (baseIndex) => (frameGraphics.pixels[baseIndex + 3] = 0.5 * 255),
+        )
       }
     }
   }
@@ -225,4 +247,16 @@ function resetSpritesPosition() {
 function resetSpritesVelocity() {
   programVars.sprites.firstBird.velocity.x = programVars.birdInitialVelocity
   programVars.sprites.secondBird.velocity.x = programVars.birdInitialVelocity
+}
+
+function updateP5Pixel(row, col, width, pixelDensity, updatePixel) {
+  for (let i = 0; i < pixelDensity; ++i) {
+    for (let j = 0; j < pixelDensity; ++j) {
+      const index =
+        4 *
+        ((row * pixelDensity + j) * width * pixelDensity +
+          (col * pixelDensity + i))
+      updatePixel(index)
+    }
+  }
 }
