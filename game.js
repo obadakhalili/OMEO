@@ -310,15 +310,3 @@ function updateP5Pixel(row, col, width, pixelDensity, updatePixel) {
     }
   }
 }
-
-function updateP5Pixel(row, col, width, pixelDensity, updatePixel) {
-  for (let i = 0; i < pixelDensity; ++i) {
-    for (let j = 0; j < pixelDensity; ++j) {
-      const index =
-        4 *
-        ((row * pixelDensity + j) * width * pixelDensity +
-          (col * pixelDensity + i))
-      updatePixel(index)
-    }
-  }
-}
