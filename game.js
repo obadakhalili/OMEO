@@ -169,11 +169,7 @@ export function draw(p5) {
                 programVars.sounds.hitSound.play()
 
                 if (programVars.gameState.remainingLivesCount <= 0) {
-                  p5.background(0, 0, 0, 0.5 * 255)
-                  p5.textSize(40)
-                  p5.textAlign(p5.CENTER)
-                  p5.text("Game Over", p5.width / 2, p5.height * 0.25)
-                  p5.fill(255)
+                  addOverlayWithText(p5, "Game Over")
                   programVars.UIs.restartGameButton.show()
                   programVars.sounds.backgroundMusic.stop()
                   programVars.sounds.loseSound.play()
@@ -203,19 +199,12 @@ export function draw(p5) {
                     programVars.gameState.playedLevelsCount ===
                     programVars.gameSettings.totalLevelsCount
                   ) {
-                    p5.background(0, 0, 0, 0.5 * 255)
-                    p5.textSize(40)
-                    p5.textAlign(p5.CENTER)
-                    p5.text(
-                      "Congrats, You Won!",
-                      p5.width / 2,
-                      p5.height * 0.25,
-                    )
-                    p5.fill(255)
+                    addOverlayWithText(p5, "Congrats, You Won!")
                     programVars.sounds.backgroundMusic.stop()
                     programVars.sounds.winSound.play()
                     programVars.UIs.restartGameButton.show()
                   } else {
+                    addOverlayWithText(p5, "Level Up")
                     programVars.sounds.backgroundMusic.stop()
                     programVars.sounds.levelUpSound.play()
                     programVars.UIs.nextLevelButton.show()
@@ -285,6 +274,14 @@ function drawStatusBar(p5) {
   p5.textSize(25)
   p5.textAlign(p5.LEFT)
   p5.text("LEVELS = " + programVars.gameState.remainingLivesCount, 15, 25)
+  p5.fill(255)
+}
+
+function addOverlayWithText(p5, text) {
+  p5.background(0, 0, 0, 0.5 * 255)
+  p5.textSize(40)
+  p5.textAlign(p5.CENTER)
+  p5.text(text, p5.width / 2, p5.height * 0.25)
   p5.fill(255)
 }
 
