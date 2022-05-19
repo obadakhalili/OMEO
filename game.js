@@ -13,6 +13,7 @@ p5Play(P5)
 new P5((p5) => {
   p5.setup = setup(p5)
   p5.draw = draw(p5)
+  p5.preload = preload(p5)
 }, document.getElementById("game"))
 
 const programVars = {
@@ -56,9 +57,19 @@ const programVars = {
   gameFramesArePaused: false,
 }
 
-export function setup(p5) {
+function preload(p5) {
   return () => {
-    p5.createCanvas(640, 480).text("Loading...", p5.width / 2, p5.height / 2)
+    programVars.crackmanFont = p5.loadFont("assets/fonts/crackman.ttf")
+  }
+}
+
+function setup(p5) {
+  return () => {
+    p5.createCanvas(640, 480)
+    p5.textFont(programVars.crackmanFont)
+    p5.fill(255, 204, 0)
+    p5.textSize(50)
+    p5.text("Loading...", 200, p5.height / 2)
 
     programVars.cameraCapture = p5.createCapture(p5.VIDEO)
     programVars.cameraCapture.size(p5.width, p5.height).hide()
@@ -141,7 +152,7 @@ export function setup(p5) {
   }
 }
 
-export function draw(p5) {
+function draw(p5) {
   return () => {
     if (
       !programVars.gameFramesArePaused &&
