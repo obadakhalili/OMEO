@@ -68,10 +68,6 @@ function preload(p5) {
 function setup(p5) {
   return () => {
     p5.createCanvas(640, 480)
-    p5.textFont(programVars.crackmanFont)
-    p5.fill(255, 204, 0)
-    p5.textSize(50)
-    p5.text("Loading...", 200, p5.height / 2)
 
     programVars.cameraCapture = p5.createCapture(p5.VIDEO)
     programVars.cameraCapture.size(p5.width, p5.height).hide()
@@ -148,6 +144,11 @@ function setup(p5) {
         programVars.shouldResetGame = true
       }
     }
+
+    p5.textFont(programVars.crackmanFont)
+    p5.fill(255, 204, 0)
+    p5.textSize(50)
+    p5.text("Loading...", 200, p5.height / 2)
 
     poseDetection
       .createDetector(poseDetection.SupportedModels.BlazePose, {

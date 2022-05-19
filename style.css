@@ -1,5 +1,5 @@
 @font-face {
-  font-family: "FutureGame";
+  font-family: "Minecraft-Evenings";
   src: url("assets/fonts/minecraft-evenings.otf");
 }
 
@@ -7,9 +7,8 @@ body {
   margin: 0;
   padding: 0;
   height: 100vh;
-  background-image: url("assets/backgrounds/landing-image.png");
+  background-image: url("assets/images/backgrounds/background-image.webp");
   background-size: cover;
-  background-repeat: no-repeat;
   background-position: center center;
 }
 
@@ -20,12 +19,10 @@ body {
 }
 
 .header h1 {
-  color: black;
+  color: white;
   text-align: center;
-  font-family: "FutureGame";
+  font-family: "Minecraft-Evenings";
   font-size: 50px;
-  margin: 0;
-  padding-top: 10px;
 }
 
 .container #game {
