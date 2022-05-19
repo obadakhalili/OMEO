@@ -26,6 +26,7 @@
     "@tensorflow-models/pose-detection": "^2.0.0",
     "@tensorflow/tfjs-backend-webgl": "^3.17.0",
     "@tensorflow/tfjs-core": "^3.17.0",
+    "howler": "^2.2.3",
     "p5": "^1.4.1"
   }
 }
