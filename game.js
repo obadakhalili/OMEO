@@ -13,6 +13,7 @@ p5Play(P5)
 new P5((p5) => {
   p5.setup = setup(p5)
   p5.draw = draw(p5)
+  p5.preload = preload(p5)
 }, document.getElementById("game"))
 
 const programVars = {
@@ -49,17 +50,26 @@ const programVars = {
     passesCountPerLevel: 2,
     totalLevelsCount: 3,
     birdInitialVelocity: -5,
+    isMuted: false,
   },
   gameState: {},
-  resetGame: true,
+  shouldResetGame: true,
   gameFramesArePaused: false,
 }
-
-programVars.remainingLivesCount = programVars.totalLivesCount
+let myFont
+export function preload(p5) {
+  return () => {
+    myFont = p5.loadFont("assets/fonts/crackman.ttf")
+  }
+}
 
 export function setup(p5) {
   return () => {
-    p5.createCanvas(640, 480).text("Loading...", p5.width / 2, p5.height / 2)
+    p5.createCanvas(640, 480)
+    p5.textFont(myFont)
+    p5.fill(255, 204, 0)
+    p5.textSize(50)
+    p5.text("Loading...", 200, p5.height / 2)
 
     programVars.cameraCapture = p5.createCapture(p5.VIDEO)
     programVars.cameraCapture.size(p5.width, p5.height).hide()
@@ -67,7 +77,7 @@ export function setup(p5) {
     programVars.gameBackground = p5.loadImage("./assets/backgrounds/sky.png")
 
     programVars.firstBirdInitialPosition = {
-      x: p5.width,
+      x: p5.width + 50,
       y: 150,
     }
     programVars.secondBirdInitialPosition = {
@@ -116,10 +126,21 @@ export function setup(p5) {
     programVars.UIs.restartGameButton.addClass("button")
     programVars.UIs.restartGameButton.hide()
     programVars.UIs.restartGameButton.mousePressed(function () {
-      programVars.resetGame = true
+      programVars.shouldResetGame = true
       this.hide()
       loop(p5)
     })
+
+    p5.keyPressed = function () {
+      if (p5.keyCode === 77 /* m */) {
+        Howler.mute(
+          (programVars.gameSettings.isMuted =
+            !programVars.gameSettings.isMuted),
+        )
+      } else if (p5.keyCode === 82 /* r */) {
+        programVars.shouldResetGame = true
+      }
+    }
 
     poseDetection
       .createDetector(poseDetection.SupportedModels.BlazePose, {
@@ -141,9 +162,9 @@ export function draw(p5) {
       programVars.blazePoze
         .estimatePoses(programVars.cameraCapture.elt, { flipHorizontal: true })
         .then(([{ keypoints, segmentation } = {}]) => {
-          if (programVars.resetGame) {
+          if (programVars.shouldResetGame) {
             resetGame()
-            programVars.resetGame = false
+            programVars.shouldResetGame = false
           }
 
           if (keypoints) {
@@ -170,9 +191,9 @@ export function draw(p5) {
 
                 if (programVars.gameState.remainingLivesCount <= 0) {
                   addOverlayWithText(p5, "Game Over")
-                  programVars.UIs.restartGameButton.show()
                   programVars.sounds.backgroundMusic.stop()
                   programVars.sounds.loseSound.play()
+                  programVars.UIs.restartGameButton.show()
                   return noLoop(p5)
                 }
 
@@ -313,15 +334,14 @@ function resetGame() {
     programVars.gameSettings.birdInitialVelocity
   programVars.sprites.secondBird.velocity.x =
     programVars.gameSettings.birdInitialVelocity
+
   programVars.gameState.remainingLivesCount =
     programVars.gameSettings.totalLivesCount
-
   programVars.gameState.completeSpritesPassesCount = 0
   programVars.gameState.playedLevelsCount = 0
   programVars.gameState.isPlayerSolid = true
 
-  programVars.sounds.loseSound.stop()
-  programVars.sounds.winSound.stop()
+  Howler.stop()
   programVars.sounds.backgroundMusic.play()
 }
 

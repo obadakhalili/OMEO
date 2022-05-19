@@ -1,7 +1,15 @@
+@font-face {
+  font-family: "FutureGame";
+  src: url("assets/fonts/Minecraft\ Evenings.otf");
+}
 body {
   margin: 0;
   padding: 0;
   height: 100vh;
+  background-image: url("assets/backgrounds/Game.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center;
 }
 
 .container {
@@ -11,7 +19,12 @@ body {
 }
 
 .header h1 {
+  color: black;
   text-align: center;
+  font-family: "FutureGame";
+  font-size: 50px;
+  margin: 0;
+  padding-top: 10px;
 }
 
 .container #game {
