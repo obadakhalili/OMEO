@@ -49,13 +49,12 @@ const programVars = {
     passesCountPerLevel: 2,
     totalLevelsCount: 3,
     birdInitialVelocity: -5,
+    isMuted: false,
   },
   gameState: {},
-  resetGame: true,
+  shouldResetGame: true,
   gameFramesArePaused: false,
 }
-
-programVars.remainingLivesCount = programVars.totalLivesCount
 
 export function setup(p5) {
   return () => {
@@ -67,7 +66,7 @@ export function setup(p5) {
     programVars.gameBackground = p5.loadImage("./assets/backgrounds/sky.png")
 
     programVars.firstBirdInitialPosition = {
-      x: p5.width,
+      x: p5.width + 50,
       y: 150,
     }
     programVars.secondBirdInitialPosition = {
@@ -116,10 +115,21 @@ export function setup(p5) {
     programVars.UIs.restartGameButton.addClass("button")
     programVars.UIs.restartGameButton.hide()
     programVars.UIs.restartGameButton.mousePressed(function () {
-      programVars.resetGame = true
+      programVars.shouldResetGame = true
       this.hide()
       loop(p5)
     })
+
+    p5.keyPressed = function () {
+      if (p5.keyCode === 77 /* m */) {
+        Howler.mute(
+          (programVars.gameSettings.isMuted =
+            !programVars.gameSettings.isMuted),
+        )
+      } else if (p5.keyCode === 82 /* r */) {
+        programVars.shouldResetGame = true
+      }
+    }
 
     poseDetection
       .createDetector(poseDetection.SupportedModels.BlazePose, {
@@ -141,9 +151,9 @@ export function draw(p5) {
       programVars.blazePoze
         .estimatePoses(programVars.cameraCapture.elt, { flipHorizontal: true })
         .then(([{ keypoints, segmentation } = {}]) => {
-          if (programVars.resetGame) {
+          if (programVars.shouldResetGame) {
             resetGame()
-            programVars.resetGame = false
+            programVars.shouldResetGame = false
           }
 
           if (keypoints) {
@@ -170,9 +180,9 @@ export function draw(p5) {
 
                 if (programVars.gameState.remainingLivesCount <= 0) {
                   addOverlayWithText(p5, "Game Over")
-                  programVars.UIs.restartGameButton.show()
                   programVars.sounds.backgroundMusic.stop()
                   programVars.sounds.loseSound.play()
+                  programVars.UIs.restartGameButton.show()
                   return noLoop(p5)
                 }
 
@@ -313,15 +323,14 @@ function resetGame() {
     programVars.gameSettings.birdInitialVelocity
   programVars.sprites.secondBird.velocity.x =
     programVars.gameSettings.birdInitialVelocity
+
   programVars.gameState.remainingLivesCount =
     programVars.gameSettings.totalLivesCount
-
   programVars.gameState.completeSpritesPassesCount = 0
   programVars.gameState.playedLevelsCount = 0
   programVars.gameState.isPlayerSolid = true
 
-  programVars.sounds.loseSound.stop()
-  programVars.sounds.winSound.stop()
+  Howler.stop()
   programVars.sounds.backgroundMusic.play()
 }
 

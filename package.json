@@ -14,7 +14,6 @@
     "*.{js,ts,jsx,tsx,mdx,css,html,md,yml,json}": "yarn format"
   },
   "devDependencies": {
-    "@tensorflow/tfjs-converter": "^3.17.0",
     "husky": "^7.0.4",
     "lint-staged": "^12.4.1",
     "prettier": "^2.6.2",
@@ -25,6 +24,7 @@
     "@obadakhalili/p5.play": "^1.0.0",
     "@tensorflow-models/pose-detection": "^2.0.0",
     "@tensorflow/tfjs-backend-webgl": "^3.17.0",
+    "@tensorflow/tfjs-converter": "^3.17.0",
     "@tensorflow/tfjs-core": "^3.17.0",
     "howler": "^2.2.3",
     "p5": "^1.4.1"
