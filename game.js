@@ -46,7 +46,8 @@ const programVars = {
     birdInitialVelocity: -5,
   },
   gameState: {},
-  isInitialFrameAfterLoading: true,
+  resetGame: true,
+  gameFramesArePaused: false,
 }
 
 programVars.remainingLivesCount = programVars.totalLivesCount
@@ -101,7 +102,7 @@ export function setup(p5) {
       programVars.sprites.firstBird.velocity.x -= 5
       programVars.sprites.secondBird.velocity.x -= 5
       this.hide()
-      p5.loop()
+      loop(p5)
     })
 
     programVars.UIs.restartGameButton = p5.createButton("Restart Game")
@@ -109,9 +110,9 @@ export function setup(p5) {
     programVars.UIs.restartGameButton.addClass("button")
     programVars.UIs.restartGameButton.hide()
     programVars.UIs.restartGameButton.mousePressed(function () {
-      resetGame()
+      programVars.resetGame = true
       this.hide()
-      p5.loop()
+      loop(p5)
     })
 
     poseDetection
@@ -127,15 +128,16 @@ export function setup(p5) {
 export function draw(p5) {
   return () => {
     if (
+      !programVars.gameFramesArePaused &&
       programVars.blazePoze &&
       programVars.cameraCapture.elt.readyState === 4
     ) {
       programVars.blazePoze
         .estimatePoses(programVars.cameraCapture.elt, { flipHorizontal: true })
         .then(([{ keypoints, segmentation } = {}]) => {
-          if (programVars.isInitialFrameAfterLoading) {
+          if (programVars.resetGame) {
             resetGame()
-            programVars.isInitialFrameAfterLoading = false
+            programVars.resetGame = false
           }
 
           if (keypoints) {
@@ -146,26 +148,7 @@ export function draw(p5) {
 
               p5.drawSprites()
 
-              if (programVars.gameState.remainingLivesCount > 0) {
-                p5.textSize(25)
-                p5.textAlign(p5.LEFT)
-                p5.text(
-                  "LEVELS = " + programVars.gameState.remainingLivesCount,
-                  15,
-                  25,
-                )
-                p5.fill(255)
-              } else {
-                p5.noLoop()
-                p5.background(0, 0, 0, 0.5 * 255)
-                p5.textSize(40)
-                p5.textAlign(p5.CENTER)
-                p5.text("Game Over", p5.width / 2, p5.height * 0.25)
-                p5.fill(255)
-                programVars.UIs.restartGameButton.show()
-                programVars.sounds.backgroundMusic.stop()
-                programVars.sounds.loseSound.play()
-              }
+              drawStatusBar(p5)
 
               if (
                 programVars.gameState.isPlayerSolid &&
@@ -175,8 +158,22 @@ export function draw(p5) {
                     programVars.sprites.secondBird.overlapPoint(x, y),
                 )
               ) {
-                programVars.sounds.hitSound.play()
                 programVars.gameState.remainingLivesCount--
+
+                programVars.sounds.hitSound.play()
+
+                if (programVars.gameState.remainingLivesCount <= 0) {
+                  p5.background(0, 0, 0, 0.5 * 255)
+                  p5.textSize(40)
+                  p5.textAlign(p5.CENTER)
+                  p5.text("Game Over", p5.width / 2, p5.height * 0.25)
+                  p5.fill(255)
+                  programVars.UIs.restartGameButton.show()
+                  programVars.sounds.backgroundMusic.stop()
+                  programVars.sounds.loseSound.play()
+                  return noLoop(p5)
+                }
+
                 programVars.gameState.isPlayerSolid = false
                 setTimeout(
                   () => (programVars.gameState.isPlayerSolid = true),
@@ -196,19 +193,27 @@ export function draw(p5) {
                 ) {
                   programVars.gameState.playedLevelsCount++
 
-                  p5.noLoop()
-
                   if (
                     programVars.gameState.playedLevelsCount ===
                     programVars.gameSettings.totalLevelsCount
                   ) {
-                    // TODO: game won screen
+                    p5.background(0, 0, 0, 0.5 * 255)
+                    p5.textSize(40)
+                    p5.textAlign(p5.CENTER)
+                    p5.text(
+                      "Congrats, You Won!",
+                      p5.width / 2,
+                      p5.height * 0.25,
+                    )
+                    p5.fill(255)
                     programVars.sounds.backgroundMusic.stop()
                     programVars.sounds.winSound.play()
                     programVars.UIs.restartGameButton.show()
                   } else {
                     programVars.UIs.nextLevelButton.show()
                   }
+
+                  return noLoop(p5)
                 }
               }
             })
@@ -268,6 +273,23 @@ function addPlayerSegToCanvas(segImageData, p5) {
   frameGraphics.remove()
 }
 
+function drawStatusBar(p5) {
+  p5.textSize(25)
+  p5.textAlign(p5.LEFT)
+  p5.text("LEVELS = " + programVars.gameState.remainingLivesCount, 15, 25)
+  p5.fill(255)
+}
+
+function noLoop(p5) {
+  p5.noLoop()
+  programVars.gameFramesArePaused = true
+}
+
+function loop(p5) {
+  p5.loop()
+  programVars.gameFramesArePaused = false
+}
+
 function resetSpritesPosition() {
   programVars.sprites.firstBird.position.x =
     programVars.firstBirdInitialPosition.x
@@ -279,21 +301,20 @@ function resetSpritesPosition() {
     programVars.secondBirdInitialPosition.y
 }
 
-function resetSpritesVelocity() {
+function resetGame() {
+  resetSpritesPosition()
+
   programVars.sprites.firstBird.velocity.x =
     programVars.gameSettings.birdInitialVelocity
   programVars.sprites.secondBird.velocity.x =
     programVars.gameSettings.birdInitialVelocity
-}
-
-function resetGame() {
-  resetSpritesPosition()
-  resetSpritesVelocity()
   programVars.gameState.remainingLivesCount =
     programVars.gameSettings.totalLivesCount
+
   programVars.gameState.completeSpritesPassesCount = 0
   programVars.gameState.playedLevelsCount = 0
   programVars.gameState.isPlayerSolid = true
+
   programVars.sounds.loseSound.stop()
   programVars.sounds.winSound.stop()
   programVars.sounds.backgroundMusic.play()
