@@ -33,6 +33,11 @@ const programVars = {
       loop: false,
       volume: 0.5,
     }),
+    levelUpSound: new Howl({
+      src: ["./assets/sounds/level-up-sound.wav"],
+      loop: false,
+      volume: 0.5,
+    }),
     winSound: new Howl({
       src: ["./assets/sounds/win-sound.ogg"],
       loop: false,
@@ -40,10 +45,10 @@ const programVars = {
     }),
   },
   gameSettings: {
-    totalLivesCount: 3,
-    passesCountPerLevel: 2,
-    totalLevelsCount: 3,
-    birdInitialVelocity: -5,
+    totalLivesCount: Infinity,
+    passesCountPerLevel: 1,
+    totalLevelsCount: 2,
+    birdInitialVelocity: -15,
   },
   gameState: {},
   resetGame: true,
@@ -101,6 +106,7 @@ export function setup(p5) {
     programVars.UIs.nextLevelButton.mousePressed(function () {
       programVars.sprites.firstBird.velocity.x -= 5
       programVars.sprites.secondBird.velocity.x -= 5
+      programVars.sounds.backgroundMusic.play()
       this.hide()
       loop(p5)
     })
@@ -210,6 +216,8 @@ export function draw(p5) {
                     programVars.sounds.winSound.play()
                     programVars.UIs.restartGameButton.show()
                   } else {
+                    programVars.sounds.backgroundMusic.stop()
+                    programVars.sounds.levelUpSound.play()
                     programVars.UIs.nextLevelButton.show()
                   }
 
