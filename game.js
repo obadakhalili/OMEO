@@ -19,28 +19,29 @@ new P5((p5) => {
 const programVars = {
   sprites: {},
   UIs: {},
+  icons: {},
   sounds: {
-    backgroundMusic: new Howl({
-      src: ["./assets/sounds/background-music.ogg"],
+    background: new Howl({
+      src: ["./assets/sounds/background.ogg"],
       loop: true,
       volume: 0.5,
     }),
-    hitSound: new Howl({
-      src: ["./assets/sounds/hit-sound.ogg"],
+    hit: new Howl({
+      src: ["./assets/sounds/hit.ogg"],
       volume: 0.5,
     }),
-    loseSound: new Howl({
-      src: ["./assets/sounds/lose-sound.ogg"],
+    lose: new Howl({
+      src: ["./assets/sounds/lose.ogg"],
       loop: false,
       volume: 0.5,
     }),
-    levelUpSound: new Howl({
-      src: ["./assets/sounds/level-up-sound.wav"],
+    levelUp: new Howl({
+      src: ["./assets/sounds/level-up.wav"],
       loop: false,
       volume: 0.5,
     }),
-    winSound: new Howl({
-      src: ["./assets/sounds/win-sound.ogg"],
+    win: new Howl({
+      src: ["./assets/sounds/win.ogg"],
       loop: false,
       volume: 0.5,
     }),
@@ -50,9 +51,10 @@ const programVars = {
     passesCountPerLevel: 2,
     totalLevelsCount: 3,
     birdInitialVelocity: -5,
+  },
+  gameState: {
     isMuted: false,
   },
-  gameState: {},
   shouldResetGame: true,
   gameFramesArePaused: false,
 }
@@ -74,7 +76,13 @@ function setup(p5) {
     programVars.cameraCapture = p5.createCapture(p5.VIDEO)
     programVars.cameraCapture.size(p5.width, p5.height).hide()
 
-    programVars.gameBackground = p5.loadImage("./assets/backgrounds/sky.png")
+    programVars.gameBackground = p5.loadImage(
+      "./assets/images/backgrounds/sky.png",
+    )
+    programVars.icons.heart = p5.loadImage("./assets/images/icons/heart.png")
+    programVars.icons.star = p5.loadImage("./assets/images/icons/star.png")
+    programVars.icons.mute = p5.loadImage("./assets/images/icons/mute.png")
+    programVars.icons.unmute = p5.loadImage("./assets/images/icons/unmute.png")
 
     programVars.firstBirdInitialPosition = {
       x: p5.width + 50,
@@ -91,8 +99,8 @@ function setup(p5) {
     )
     programVars.sprites.firstBird.addAnimation(
       "normal",
-      "assets/sprites/bird-1/frame-1.png",
-      "assets/sprites/bird-1/frame-8.png",
+      "assets/images/sprites/bird-1/frame-1.png",
+      "assets/images/sprites/bird-1/frame-8.png",
     )
     programVars.sprites.firstBird.scale = 0.2
     programVars.sprites.firstBird.mirrorX(-1)
@@ -103,8 +111,8 @@ function setup(p5) {
     )
     programVars.sprites.secondBird.addAnimation(
       "normal",
-      "assets/sprites/bird-2/frame-1.png",
-      "assets/sprites/bird-2/frame-17.png",
+      "assets/images/sprites/bird-2/frame-1.png",
+      "assets/images/sprites/bird-2/frame-17.png",
     )
     programVars.sprites.secondBird.scale = 0.1
     programVars.sprites.secondBird.mirrorX(-1)
@@ -116,7 +124,7 @@ function setup(p5) {
     programVars.UIs.nextLevelButton.mousePressed(function () {
       programVars.sprites.firstBird.velocity.x -= 5
       programVars.sprites.secondBird.velocity.x -= 5
-      programVars.sounds.backgroundMusic.play()
+      programVars.sounds.background.play()
       this.hide()
       loop(p5)
     })
@@ -134,8 +142,7 @@ function setup(p5) {
     p5.keyPressed = function () {
       if (p5.keyCode === 77 /* m */) {
         Howler.mute(
-          (programVars.gameSettings.isMuted =
-            !programVars.gameSettings.isMuted),
+          (programVars.gameState.isMuted = !programVars.gameState.isMuted),
         )
       } else if (p5.keyCode === 82 /* r */) {
         programVars.shouldResetGame = true
@@ -187,12 +194,12 @@ function draw(p5) {
               ) {
                 programVars.gameState.remainingLivesCount--
 
-                programVars.sounds.hitSound.play()
+                programVars.sounds.hit.play()
 
                 if (programVars.gameState.remainingLivesCount <= 0) {
                   addOverlayWithText(p5, "Game Over")
-                  programVars.sounds.backgroundMusic.stop()
-                  programVars.sounds.loseSound.play()
+                  programVars.sounds.background.stop()
+                  programVars.sounds.lose.play()
                   programVars.UIs.restartGameButton.show()
                   return noLoop(p5)
                 }
@@ -221,13 +228,13 @@ function draw(p5) {
                     programVars.gameSettings.totalLevelsCount
                   ) {
                     addOverlayWithText(p5, "Congrats, You Won!")
-                    programVars.sounds.backgroundMusic.stop()
-                    programVars.sounds.winSound.play()
+                    programVars.sounds.background.stop()
+                    programVars.sounds.win.play()
                     programVars.UIs.restartGameButton.show()
                   } else {
                     addOverlayWithText(p5, "Level Up")
-                    programVars.sounds.backgroundMusic.stop()
-                    programVars.sounds.levelUpSound.play()
+                    programVars.sounds.background.stop()
+                    programVars.sounds.levelUp.play()
                     programVars.UIs.nextLevelButton.show()
                   }
 
@@ -294,8 +301,25 @@ function addPlayerSegToCanvas(segImageData, p5) {
 function drawStatusBar(p5) {
   p5.textSize(25)
   p5.textAlign(p5.LEFT)
-  p5.text("LEVELS = " + programVars.gameState.remainingLivesCount, 15, 25)
+  p5.text("LIVES = ", 15, 35)
   p5.fill(255)
+  for (let i = 0; i < programVars.gameState.remainingLivesCount; i++) {
+    p5.image(programVars.icons.heart, 110 + i * 40, 5, 40, 40)
+  }
+
+  p5.textSize(25)
+  p5.textAlign(p5.LEFT)
+  p5.text("LEVELS = ", p5.width / 2, 35)
+  p5.fill(255)
+  for (let i = 0; i <= programVars.gameState.playedLevelsCount; i++) {
+    p5.image(programVars.icons.star, p5.width / 2 + 120 + i * 40, 5, 35, 35)
+  }
+
+  if (programVars.gameState.isMuted) {
+    p5.image(programVars.icons.mute, p5.width - 40, p5.height - 40, 25, 25)
+  } else {
+    p5.image(programVars.icons.unmute, p5.width - 40, p5.height - 40, 25, 25)
+  }
 }
 
 function addOverlayWithText(p5, text) {
@@ -342,7 +366,7 @@ function resetGame() {
   programVars.gameState.isPlayerSolid = true
 
   Howler.stop()
-  programVars.sounds.backgroundMusic.play()
+  programVars.sounds.background.play()
 }
 
 function updateP5Pixel(row, col, width, pixelDensity, updatePixel) {
