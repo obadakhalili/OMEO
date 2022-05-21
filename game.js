@@ -80,46 +80,56 @@ function setup(p5) {
     programVars.icons.mute = p5.loadImage("./assets/images/icons/mute.png")
     programVars.icons.unmute = p5.loadImage("./assets/images/icons/unmute.png")
 
-    programVars.firstBirdInitialPosition = {
+    programVars.redBirdInitialPosition = {
       x: p5.width + 50,
       y: 150,
     }
-    programVars.secondBirdInitialPosition = {
+    programVars.yellowBirdInitialPosition = {
       x: p5.width + p5.width * 0.85,
       y: 250,
     }
 
-    programVars.sprites.firstBird = p5.createSprite(
-      programVars.firstBirdInitialPosition.x,
-      programVars.firstBirdInitialPosition.y,
+    programVars.sprites.redBird = p5.createSprite(
+      programVars.redBirdInitialPosition.x,
+      programVars.redBirdInitialPosition.y,
     )
-    programVars.sprites.firstBird.addAnimation(
+    programVars.sprites.redBird.addAnimation(
       "normal",
-      "assets/images/sprites/bird-1/frame-1.png",
-      "assets/images/sprites/bird-1/frame-8.png",
+      "assets/images/sprites/red-bird/flying/frame-1.png",
+      "assets/images/sprites/red-bird/flying/frame-2.png",
     )
-    programVars.sprites.firstBird.scale = 0.2
-    programVars.sprites.firstBird.mirrorX(-1)
+    programVars.sprites.redBird.addAnimation(
+      "hit",
+      "assets/images/sprites/red-bird/got-hit/frame-1.png",
+      "assets/images/sprites/red-bird/got-hit/frame-2.png",
+    )
+    programVars.sprites.redBird.scale = 0.2
+    programVars.sprites.redBird.mirrorX(-1)
 
-    programVars.sprites.secondBird = p5.createSprite(
-      programVars.secondBirdInitialPosition.x,
-      programVars.secondBirdInitialPosition.y,
+    programVars.sprites.yellowBird = p5.createSprite(
+      programVars.yellowBirdInitialPosition.x,
+      programVars.yellowBirdInitialPosition.y,
     )
-    programVars.sprites.secondBird.addAnimation(
+    programVars.sprites.yellowBird.addAnimation(
       "normal",
-      "assets/images/sprites/bird-2/frame-1.png",
-      "assets/images/sprites/bird-2/frame-17.png",
+      "assets/images/sprites/yellow-bird/flying/frame-1.png",
+      "assets/images/sprites/yellow-bird/flying/frame-4.png",
     )
-    programVars.sprites.secondBird.scale = 0.1
-    programVars.sprites.secondBird.mirrorX(-1)
+    programVars.sprites.yellowBird.addAnimation(
+      "hit",
+      "assets/images/sprites/yellow-bird/got-hit/frame-1.png",
+      "assets/images/sprites/yellow-bird/got-hit/frame-2.png",
+    )
+    programVars.sprites.yellowBird.scale = 0.1
+    programVars.sprites.yellowBird.mirrorX(-1)
 
     programVars.UIs.nextLevelButton = p5.createButton("Next Level")
     programVars.UIs.nextLevelButton.position("50%", "50%")
     programVars.UIs.nextLevelButton.addClass("button")
     programVars.UIs.nextLevelButton.hide()
     programVars.UIs.nextLevelButton.mousePressed(function () {
-      programVars.sprites.firstBird.velocity.x -= 5
-      programVars.sprites.secondBird.velocity.x -= 5
+      programVars.sprites.redBird.velocity.x -= 5
+      programVars.sprites.yellowBird.velocity.x -= 5
       programVars.sounds.background.play()
       this.hide()
       loop(p5)
@@ -185,13 +195,18 @@ function draw(p5) {
 
               drawStatusBar(p5)
 
+              const birdsCollisionState = {
+                redBird: keypoints.some(({ x, y }) =>
+                  programVars.sprites.redBird.overlapPoint(x, y),
+                ),
+                yellowBird: keypoints.some(({ x, y }) =>
+                  programVars.sprites.yellowBird.overlapPoint(x, y),
+                ),
+              }
+
               if (
                 programVars.gameState.isPlayerSolid &&
-                keypoints.some(
-                  ({ x, y }) =>
-                    programVars.sprites.firstBird.overlapPoint(x, y) ||
-                    programVars.sprites.secondBird.overlapPoint(x, y),
-                )
+                Object.values(birdsCollisionState).some(Boolean)
               ) {
                 programVars.gameState.remainingLivesCount--
 
@@ -206,13 +221,21 @@ function draw(p5) {
                 }
 
                 programVars.gameState.isPlayerSolid = false
-                setTimeout(
-                  () => (programVars.gameState.isPlayerSolid = true),
-                  1500,
+                const birdsNamesInCollision = Object.keys(
+                  birdsCollisionState,
+                ).filter((bird) => birdsCollisionState[bird])
+                birdsNamesInCollision.forEach((birdName) =>
+                  programVars.sprites[birdName].changeAnimation("hit"),
                 )
+                setTimeout(() => {
+                  programVars.gameState.isPlayerSolid = true
+                  birdsNamesInCollision.forEach((birdName) =>
+                    programVars.sprites[birdName].changeAnimation("normal"),
+                  )
+                }, 1500)
               }
 
-              if (programVars.sprites.secondBird.position.x < 0) {
+              if (programVars.sprites.yellowBird.position.x < 0) {
                 programVars.gameState.completeSpritesPassesCount++
 
                 resetSpritesPosition()
@@ -342,22 +365,20 @@ function loop(p5) {
 }
 
 function resetSpritesPosition() {
-  programVars.sprites.firstBird.position.x =
-    programVars.firstBirdInitialPosition.x
-  programVars.sprites.firstBird.position.y =
-    programVars.firstBirdInitialPosition.y
-  programVars.sprites.secondBird.position.x =
-    programVars.secondBirdInitialPosition.x
-  programVars.sprites.secondBird.position.y =
-    programVars.secondBirdInitialPosition.y
+  programVars.sprites.redBird.position.x = programVars.redBirdInitialPosition.x
+  programVars.sprites.redBird.position.y = programVars.redBirdInitialPosition.y
+  programVars.sprites.yellowBird.position.x =
+    programVars.yellowBirdInitialPosition.x
+  programVars.sprites.yellowBird.position.y =
+    programVars.yellowBirdInitialPosition.y
 }
 
 function resetGame() {
   resetSpritesPosition()
 
-  programVars.sprites.firstBird.velocity.x =
+  programVars.sprites.redBird.velocity.x =
     programVars.gameSettings.birdInitialVelocity
-  programVars.sprites.secondBird.velocity.x =
+  programVars.sprites.yellowBird.velocity.x =
     programVars.gameSettings.birdInitialVelocity
 
   programVars.gameState.remainingLivesCount =
